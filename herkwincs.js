@@ -12,19 +12,30 @@ const correctPassword = "04032009";
 let preloadedLetters = [];
 
 try {
+
   const preloadedElement =
     document.getElementById("preloadedData");
 
   if (preloadedElement) {
+
     const parsed =
-      JSON.parse(preloadedElement.textContent || "[]");
+      JSON.parse(
+        preloadedElement.textContent || "[]"
+      );
 
     if (Array.isArray(parsed)) {
       preloadedLetters = parsed;
     }
+
   }
+
 } catch (error) {
-  console.error("Could not read preloaded letters:", error);
+
+  console.error(
+    "Could not read preloaded letters:",
+    error
+  );
+
 }
 
 
@@ -35,22 +46,24 @@ try {
 let storedLetters = [];
 
 try {
+
   storedLetters =
     JSON.parse(
       localStorage.getItem("lettersForHer")
     ) || [];
+
 } catch (error) {
+
   storedLetters = [];
+
 }
 
 
 /*
-  Published website:
-  use letters embedded inside index.html.
+  If letters already exist inside index.html,
+  use those.
 
-  Writer/local development:
-  use localStorage if there are no
-  preloaded letters yet.
+  Otherwise, use letters saved in this browser.
 */
 
 let letters =
@@ -107,7 +120,9 @@ function startWebsite() {
       function (event) {
 
         if (event.key === "Enter") {
+
           unlockWebsite();
+
         }
 
       }
@@ -171,11 +186,14 @@ function addLetter() {
     );
 
     return;
+
   }
 
 
   const validSpotifyLink =
-    normalizeSpotifyLink(spotifyLink);
+    normalizeSpotifyLink(
+      spotifyLink
+    );
 
 
   if (!validSpotifyLink) {
@@ -185,6 +203,7 @@ function addLetter() {
     );
 
     return;
+
   }
 
 
@@ -216,12 +235,14 @@ function addLetter() {
   };
 
 
-  letters.unshift(newLetter);
+  letters.unshift(
+    newLetter
+  );
 
 
   /*
-    Save locally so the writer can continue
-    working on the same browser.
+    Save locally so letters remain available
+    in this browser before publishing.
   */
 
   localStorage.setItem(
@@ -353,6 +374,7 @@ function showPreview() {
     );
 
     return;
+
   }
 
 
@@ -473,7 +495,9 @@ function renderEnvelopes() {
       `;
 
 
-      envelopeGrid.appendChild(button);
+      envelopeGrid.appendChild(
+        button
+      );
 
     }
   );
@@ -564,6 +588,7 @@ function renderArchive() {
       '<p class="empty-text">No letters matched that search.</p>';
 
     return;
+
   }
 
 
@@ -736,6 +761,7 @@ function createSpotifyPlayer(
       "No Spotify link was added for this letter.";
 
     return;
+
   }
 
 
@@ -751,6 +777,7 @@ function createSpotifyPlayer(
       "This Spotify link could not be loaded.";
 
     return;
+
   }
 
 
@@ -764,6 +791,7 @@ function createSpotifyPlayer(
       "Press play and let the song stay with you while you read ♡";
 
     return;
+
   }
 
 
@@ -950,7 +978,9 @@ function createSpotifyFallback(
     );
 
 
-  if (!info) return;
+  if (!info) {
+    return;
+  }
 
 
   const player =
@@ -1159,17 +1189,14 @@ function exportFinishedWebsite() {
     );
 
     return;
+
   }
 
 
-  /*
-    Put the current letters directly
-    inside index.html before exporting.
-  */
-
   const preloadedElement =
-    document
-      .getElementById("preloadedData");
+    document.getElementById(
+      "preloadedData"
+    );
 
 
   if (!preloadedElement) {
@@ -1179,31 +1206,79 @@ function exportFinishedWebsite() {
     );
 
     return;
+
   }
 
 
-  const originalData =
-    preloadedElement.textContent;
-
+  /*
+    Convert the current letters into JSON.
+    This is what allows the downloaded index.html
+    to carry the letters to another device.
+  */
 
   const safeLetters =
-    JSON.stringify(letters)
-      .replace(/</g, "\\u003c")
-      .replace(/>/g, "\\u003e")
-      .replace(/&/g, "\\u0026");
+    JSON.stringify(
+      letters
+    )
+      .replace(
+        /</g,
+        "\\u003c"
+      )
+      .replace(
+        />/g,
+        "\\u003e"
+      )
+      .replace(
+        /&/g,
+        "\\u0026"
+      );
 
 
-  preloadedElement.textContent =
+  /*
+    Create a clone of the HTML document.
+
+    We use a clone instead of changing the live page
+    so the current writer page remains untouched.
+  */
+
+  const clonedDocument =
+    document.documentElement.cloneNode(
+      true
+    );
+
+
+  const clonedPreloadedElement =
+    clonedDocument.querySelector(
+      "#preloadedData"
+    );
+
+
+  if (!clonedPreloadedElement) {
+
+    alert(
+      "Could not prepare the letter data for export."
+    );
+
+    return;
+
+  }
+
+
+  /*
+    Put the letters inside the downloaded HTML.
+  */
+
+  clonedPreloadedElement.textContent =
     safeLetters;
 
 
+  /*
+    Create the final HTML file.
+  */
+
   const finalWebsite =
     "<!DOCTYPE html>\n" +
-    document.documentElement.outerHTML;
-
-
-  preloadedElement.textContent =
-    originalData;
+    clonedDocument.outerHTML;
 
 
   const blob =
@@ -1222,7 +1297,9 @@ function exportFinishedWebsite() {
 
 
   const link =
-    document.createElement("a");
+    document.createElement(
+      "a"
+    );
 
 
   link.href =
@@ -1246,13 +1323,20 @@ function exportFinishedWebsite() {
   );
 
 
-  URL.revokeObjectURL(
-    downloadURL
+  setTimeout(
+    function () {
+
+      URL.revokeObjectURL(
+        downloadURL
+      );
+
+    },
+    1000
   );
 
 
   alert(
-    "Your updated index.html was downloaded. Upload it to GitHub to publish your new letters."
+    "Your updated index.html was downloaded. Upload this file to GitHub to publish your new letters."
   );
 
 }
@@ -1262,10 +1346,14 @@ function exportFinishedWebsite() {
    ESCAPE HTML
 ========================================================= */
 
-function escapeHTML(text) {
+function escapeHTML(
+  text
+) {
 
   const temporaryElement =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
 
   temporaryElement.textContent =
