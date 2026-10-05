@@ -1155,7 +1155,7 @@ function exportFinishedWebsite() {
   if (letters.length === 0) {
 
     alert(
-      "Add at least one letter before downloading the finished website."
+      "Add at least one letter before downloading the updated website."
     );
 
     return;
@@ -1164,7 +1164,7 @@ function exportFinishedWebsite() {
 
   /*
     Put the current letters directly
-    inside the HTML before exporting.
+    inside index.html before exporting.
   */
 
   const preloadedElement =
@@ -1230,7 +1230,7 @@ function exportFinishedWebsite() {
 
 
   link.download =
-    "for-her-finished.html";
+    "index.html";
 
 
   document.body.appendChild(
@@ -1252,7 +1252,7 @@ function exportFinishedWebsite() {
 
 
   alert(
-    "Your finished website was downloaded. Keep for-her-finished.html, herc.css, and herkwincs.js together."
+    "Your updated index.html was downloaded. Upload it to GitHub to publish your new letters."
   );
 
 }
