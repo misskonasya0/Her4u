@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" href="herc.css" />
+
+  <title>for you, someday♡</title>
+
+  <!-- Spotify Embed API -->
+  <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
+
+  <!-- Your JavaScript -->
+  <script src="herkwincs.js" defer></script>
+</head>
+
+<body>
+
+  <div class="stars">
+    <div class="star"></div>
+    <div class="star"></div>
+    <div class="star"></div>
+    <div class="star"></div>
+    <div class="star"></div>
+    <div class="star"></div>
+    <div class="star"></div>
+    <div class="star"></div>
+  </div>
+
+  <main class="container">
+
+    <!-- WRITER PAGE -->
+    <section class="glass-card hidden" id="writerPage">
+
+      <div class="heart">♡</div>
+
+      <h1>unsaid thoughts</h1>
+
+      <div class="writer-card">
+
+        <label for="letterTitle">Letter title</label>
+        <input
+          id="letterTitle"
+          type="text"
+          placeholder="Example: The beginning"
+        />
+
+        <label for="letterMessage">Your letter</label>
+        <textarea
+          id="letterMessage"
+          placeholder="Write your message here..."
+        ></textarea>
+
+        <label for="bandName">Band or artist</label>
+
+        <select id="bandName">
+          <option value="Chase Atlantic">Chase Atlantic</option>
+          <option value="The Ridleys">The Ridleys</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <label for="songTitle">Song title</label>
+
+        <input
+          id="songTitle"
+          type="text"
+          placeholder="Example: Swim"
+        />
+
+        <label for="spotifyLink">Spotify song link</label>
+
+        <input
+          id="spotifyLink"
+          type="url"
+          placeholder="https://open.spotify.com/track/..."
+        />
+
+        <p class="input-hint">
+          Paste the Spotify song link from the song you want for this letter.
+        </p>
+
+        <div class="writer-actions">
+
+          <button
+            class="save-button"
+            type="button"
+            onclick="addLetter()"
+          >
+            + Add this letter
+          </button>
+
+          <button
+            class="secondary-button"
+            type="button"
+            onclick="showPreview()"
+          >
+            Preview birthday website
+          </button>
+
+        </div>
+
+      </div>
+
+      <div class="writer-card">
+
+        <p id="letterCount">
+          You have 0 letters saved.
+        </p>
+
+        <div class="writer-actions">
+
+          <button
+            class="secondary-button"
+            type="button"
+            onclick="exportFinishedWebsite()"
+          >
+            Download finished website
+          </button>
+
+          <button
+            class="danger-button"
+            type="button"
+            onclick="deleteAllLetters()"
+          >
+            Delete all letters
+          </button>
+
+        </div>
+
+      </div>
+
+  
+    </section>
+
+
+    <!-- PASSWORD PAGE -->
+    <section class="glass-card hidden" id="lockPage">
+
+      <div class="heart">♡</div>
+
+      <h1>for you, someday</h1>
+
+      <p>
+        I kept a few words here for you.<br>
+        Open it with the date that began your story.
+      </p>
+
+      <input
+        type="password"
+        id="password"
+        placeholder="MMDDYYYY"
+        maxlength="8"
+        inputmode="numeric"
+      />
+
+      <button
+        class="main-button"
+        type="button"
+        onclick="unlockWebsite()"
+      >
+        Open your letters ♡
+      </button>
+
+      <div id="error"></div>
+
+      <p class="footer-text">
+        Hint: your birthday. No spaces, no slash.
+      </p>
+
+    </section>
+
+
+    <!-- LETTERS PAGE -->
+    <section class="glass-card hidden" id="memoriesPage">
+
+      <div class="heart">♡</div>
+
+      <h1>happy 18th birthday</h1>
+
+      <p>
+        These are not things you need to answer.<br>
+        They are simply small pieces of what I never got to say.
+      </p>
+
+      <div
+        class="envelope-grid"
+        id="envelopeGrid"
+      ></div>
+
+      <div class="page-actions">
+
+        <button
+          class="secondary-button"
+          type="button"
+          onclick="openArchive()"
+        >
+          ♡ Letters you can return to
+        </button>
+
+      </div>
+
+      <p class="footer-text">
+        You deserve to be loved gently, especially by yourself.
+      </p>
+
+    </section>
+
+
+    <!-- ARCHIVE PAGE -->
+    <section class="glass-card hidden" id="archivePage">
+
+      <div class="heart">♡</div>
+
+      <h1>letters you can return to</h1>
+
+      <p>
+        Nothing here disappears.
+        You can reread any letter whenever you want.
+      </p>
+
+      <input
+        class="archive-search"
+        id="searchInput"
+        type="text"
+        placeholder="Search a memory, song, or word..."
+        oninput="renderArchive()"
+      />
+
+      <div id="archiveList"></div>
+
+      <div class="page-actions">
+
+        <button
+          class="secondary-button"
+          type="button"
+          onclick="goHome()"
+        >
+          ← Back to envelopes
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- OPEN LETTER PAGE -->
+    <section class="note-page" id="notePage">
+
+      <button
+        class="back-button"
+        type="button"
+        onclick="goBackFromLetter()"
+      >
+        ← Back
+      </button>
+
+      <article class="letter-card">
+
+        <h2 id="openedTitle"></h2>
+
+        <p
+          class="letter-date"
+          id="openedDate"
+        ></p>
+
+        <div
+          class="letter-content"
+          id="openedMessage"
+        ></div>
+
+
+        <!-- SONG -->
+        <div class="song-box">
+
+          <p class="song-label">
+            A song I dedicated to this letter:
+          </p>
+
+          <p
+            class="song-name"
+            id="openedSongTitle"
+          ></p>
+
+          <!-- Spotify player gets created here -->
+          <div
+            id="spotifyPlayer"
+            class="spotify-player"
+          ></div>
+
+          <p
+            id="spotifyMessage"
+            class="spotify-message"
+          >
+            Loading the song...
+          </p>
+
+        </div>
+
+      </article>
+
+      <p class="footer-text">
+        made with words I could not say before ♡
+      </p>
+
+    </section>
+
+  </main>
+
+</body>
+</html>
