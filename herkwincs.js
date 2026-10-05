@@ -12,12 +12,10 @@ const correctPassword = "04032009";
 let preloadedLetters = [];
 
 try {
-
   const preloadedElement =
     document.getElementById("preloadedData");
 
   if (preloadedElement) {
-
     const parsed =
       JSON.parse(preloadedElement.textContent || "[]");
 
@@ -25,42 +23,34 @@ try {
       preloadedLetters = parsed;
     }
   }
-
 } catch (error) {
-
-  console.error(
-    "Could not read preloaded letters:",
-    error
-  );
-
+  console.error("Could not read preloaded letters:", error);
 }
 
 
 /* =========================================================
-   LOAD SAVED LETTERS
+   LOAD LOCAL LETTERS
 ========================================================= */
 
 let storedLetters = [];
 
 try {
-
   storedLetters =
     JSON.parse(
       localStorage.getItem("lettersForHer")
     ) || [];
-
 } catch (error) {
-
   storedLetters = [];
-
 }
 
 
 /*
-  If this is the finished exported website,
-  use the letters stored inside the HTML.
+  Published website:
+  use letters embedded inside index.html.
 
-  Otherwise use localStorage.
+  Writer/local development:
+  use localStorage if there are no
+  preloaded letters yet.
 */
 
 let letters =
@@ -109,6 +99,7 @@ function startWebsite() {
   const passwordInput =
     document.getElementById("password");
 
+
   if (passwordInput) {
 
     passwordInput.addEventListener(
@@ -116,9 +107,7 @@ function startWebsite() {
       function (event) {
 
         if (event.key === "Enter") {
-
           unlockWebsite();
-
         }
 
       }
@@ -230,6 +219,11 @@ function addLetter() {
   letters.unshift(newLetter);
 
 
+  /*
+    Save locally so the writer can continue
+    working on the same browser.
+  */
+
   localStorage.setItem(
     "lettersForHer",
     JSON.stringify(letters)
@@ -328,14 +322,20 @@ function updateLetterCount() {
       : "letters";
 
 
-  document
-    .getElementById("letterCount")
-    .textContent =
+  const countElement =
+    document.getElementById("letterCount");
+
+
+  if (countElement) {
+
+    countElement.textContent =
       "You have " +
       letters.length +
       " " +
       countText +
       " saved.";
+
+  }
 
 }
 
@@ -644,8 +644,6 @@ function openLetter(
     sourcePage;
 
 
-  /* Stop any currently playing Spotify content */
-
   pauseSpotify();
 
 
@@ -756,11 +754,6 @@ function createSpotifyPlayer(
   }
 
 
-  /*
-    If Spotify's iFrame API is ready,
-    use it to create the player.
-  */
-
   if (spotifyApiReady) {
 
     createSpotifyController(
@@ -774,51 +767,8 @@ function createSpotifyPlayer(
   }
 
 
-  /*
-    Fallback iframe.
-
-    This still gives the user the normal
-    Spotify play/pause controls.
-  */
-
-  const iframe =
-    document.createElement("iframe");
-
-
-  iframe.src =
-    trackInfo.embedUrl;
-
-
-  iframe.width =
-    "100%";
-
-
-  iframe.height =
-    "152";
-
-
-  iframe.frameBorder =
-    "0";
-
-
-  iframe.allow =
-    "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
-
-
-  iframe.allowFullscreen =
-    true;
-
-
-  iframe.loading =
-    "lazy";
-
-
-  iframe.title =
-    "Spotify music player";
-
-
-  player.appendChild(
-    iframe
+  createSpotifyFallback(
+    spotifyLink
   );
 
 
@@ -847,12 +797,6 @@ function getSpotifyTrackInfo(
         .split("/")
         .filter(Boolean);
 
-
-    /*
-      Expected:
-
-      https://open.spotify.com/track/TRACK_ID
-    */
 
     const trackIndex =
       pathParts.indexOf("track");
@@ -973,11 +917,6 @@ function createSpotifyController(
       spotifyController =
         EmbedController;
 
-
-      /*
-        The user can use Spotify's own
-        Play/Pause controls.
-      */
 
       EmbedController.addListener(
         "ready",
@@ -1155,9 +1094,18 @@ function goHome() {
 
 
   document
+    .getElementById("notePage")
+    .style
+    .display = "none";
+
+
+  document
     .getElementById("memoriesPage")
     .classList
     .remove("hidden");
+
+
+  renderEnvelopes();
 
 
   window.scrollTo(
@@ -1215,14 +1163,23 @@ function exportFinishedWebsite() {
 
 
   /*
-    Put the saved letters inside the HTML
-    so the recipient does not need your
-    localStorage.
+    Put the current letters directly
+    inside the HTML before exporting.
   */
 
   const preloadedElement =
     document
       .getElementById("preloadedData");
+
+
+  if (!preloadedElement) {
+
+    alert(
+      "The preloadedData element could not be found in index.html."
+    );
+
+    return;
+  }
 
 
   const originalData =
@@ -1244,10 +1201,6 @@ function exportFinishedWebsite() {
     "<!DOCTYPE html>\n" +
     document.documentElement.outerHTML;
 
-
-  /*
-    Restore current page.
-  */
 
   preloadedElement.textContent =
     originalData;
