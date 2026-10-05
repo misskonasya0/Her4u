@@ -17,7 +17,22 @@
 
 <body>
 
+  <!--
+    LETTER DATA
+
+    Letters placed here are available on every device
+    because they are stored directly inside the website.
+
+    The writer can also add letters using localStorage.
+    Use "Download finished website" to embed new letters
+    into the website for other devices.
+  -->
+
+  <script id="preloadedData" type="application/json">[]</script>
+
+
   <div class="stars">
+
     <div class="star"></div>
     <div class="star"></div>
     <div class="star"></div>
@@ -26,41 +41,72 @@
     <div class="star"></div>
     <div class="star"></div>
     <div class="star"></div>
+
   </div>
+
 
   <main class="container">
 
+
     <!-- WRITER PAGE -->
-    <section class="glass-card hidden" id="writerPage">
+
+    <section
+      class="glass-card hidden"
+      id="writerPage"
+    >
 
       <div class="heart">♡</div>
 
       <h1>unsaid thoughts</h1>
 
+
       <div class="writer-card">
 
-        <label for="letterTitle">Letter title</label>
+        <label for="letterTitle">
+          Letter title
+        </label>
+
         <input
           id="letterTitle"
           type="text"
           placeholder="Example: The beginning"
         />
 
-        <label for="letterMessage">Your letter</label>
+
+        <label for="letterMessage">
+          Your letter
+        </label>
+
         <textarea
           id="letterMessage"
           placeholder="Write your message here..."
         ></textarea>
 
-        <label for="bandName">Band or artist</label>
+
+        <label for="bandName">
+          Band or artist
+        </label>
 
         <select id="bandName">
-          <option value="Chase Atlantic">Chase Atlantic</option>
-          <option value="The Ridleys">The Ridleys</option>
-          <option value="Other">Other</option>
+
+          <option value="Chase Atlantic">
+            Chase Atlantic
+          </option>
+
+          <option value="The Ridleys">
+            The Ridleys
+          </option>
+
+          <option value="Other">
+            Other
+          </option>
+
         </select>
 
-        <label for="songTitle">Song title</label>
+
+        <label for="songTitle">
+          Song title
+        </label>
 
         <input
           id="songTitle"
@@ -68,7 +114,10 @@
           placeholder="Example: Swim"
         />
 
-        <label for="spotifyLink">Spotify song link</label>
+
+        <label for="spotifyLink">
+          Spotify song link
+        </label>
 
         <input
           id="spotifyLink"
@@ -76,9 +125,11 @@
           placeholder="https://open.spotify.com/track/..."
         />
 
+
         <p class="input-hint">
           Paste the Spotify song link from the song you want for this letter.
         </p>
+
 
         <div class="writer-actions">
 
@@ -89,6 +140,7 @@
           >
             + Add this letter
           </button>
+
 
           <button
             class="secondary-button"
@@ -102,11 +154,13 @@
 
       </div>
 
+
       <div class="writer-card">
 
         <p id="letterCount">
           You have 0 letters saved.
         </p>
+
 
         <div class="writer-actions">
 
@@ -117,6 +171,7 @@
           >
             Download finished website
           </button>
+
 
           <button
             class="danger-button"
@@ -130,12 +185,16 @@
 
       </div>
 
-  
     </section>
 
 
+
     <!-- PASSWORD PAGE -->
-    <section class="glass-card hidden" id="lockPage">
+
+    <section
+      class="glass-card hidden"
+      id="lockPage"
+    >
 
       <div class="heart">♡</div>
 
@@ -146,6 +205,7 @@
         Open it with the date that began your story.
       </p>
 
+
       <input
         type="password"
         id="password"
@@ -153,6 +213,7 @@
         maxlength="8"
         inputmode="numeric"
       />
+
 
       <button
         class="main-button"
@@ -162,7 +223,9 @@
         Open your letters ♡
       </button>
 
+
       <div id="error"></div>
+
 
       <p class="footer-text">
         Hint: your birthday. No spaces, no slash.
@@ -171,22 +234,30 @@
     </section>
 
 
+
     <!-- LETTERS PAGE -->
-    <section class="glass-card hidden" id="memoriesPage">
+
+    <section
+      class="glass-card hidden"
+      id="memoriesPage"
+    >
 
       <div class="heart">♡</div>
 
       <h1>happy 18th birthday</h1>
+
 
       <p>
         These are not things you need to answer.<br>
         They are simply small pieces of what I never got to say.
       </p>
 
+
       <div
         class="envelope-grid"
         id="envelopeGrid"
       ></div>
+
 
       <div class="page-actions">
 
@@ -200,6 +271,7 @@
 
       </div>
 
+
       <p class="footer-text">
         You deserve to be loved gently, especially by yourself.
       </p>
@@ -207,17 +279,24 @@
     </section>
 
 
+
     <!-- ARCHIVE PAGE -->
-    <section class="glass-card hidden" id="archivePage">
+
+    <section
+      class="glass-card hidden"
+      id="archivePage"
+    >
 
       <div class="heart">♡</div>
 
       <h1>letters you can return to</h1>
 
+
       <p>
         Nothing here disappears.
         You can reread any letter whenever you want.
       </p>
+
 
       <input
         class="archive-search"
@@ -227,7 +306,9 @@
         oninput="renderArchive()"
       />
 
+
       <div id="archiveList"></div>
+
 
       <div class="page-actions">
 
@@ -244,8 +325,13 @@
     </section>
 
 
+
     <!-- OPEN LETTER PAGE -->
-    <section class="note-page" id="notePage">
+
+    <section
+      class="note-page"
+      id="notePage"
+    >
 
       <button
         class="back-button"
@@ -255,14 +341,17 @@
         ← Back
       </button>
 
+
       <article class="letter-card">
 
         <h2 id="openedTitle"></h2>
+
 
         <p
           class="letter-date"
           id="openedDate"
         ></p>
+
 
         <div
           class="letter-content"
@@ -270,23 +359,29 @@
         ></div>
 
 
+
         <!-- SONG -->
+
         <div class="song-box">
 
           <p class="song-label">
             A song I dedicated to this letter:
           </p>
 
+
           <p
             class="song-name"
             id="openedSongTitle"
           ></p>
 
+
           <!-- Spotify player gets created here -->
+
           <div
             id="spotifyPlayer"
             class="spotify-player"
           ></div>
+
 
           <p
             id="spotifyMessage"
@@ -299,11 +394,13 @@
 
       </article>
 
+
       <p class="footer-text">
         made with words I could not say before ♡
       </p>
 
     </section>
+
 
   </main>
 
