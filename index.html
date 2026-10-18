@@ -4,585 +4,233 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#fffaf7">
-
+  <meta name="description" content="A little private place for letters, memories, and songs.">
   <title>For You, Someday — Birthday Letters</title>
-  <meta
-    name="description"
-    content="A little private place to keep letters, memories, and songs."
-  >
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap"
-    rel="stylesheet"
-  >
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Tailwind utilities used by the page -->
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-
-  <!-- Your stylesheet -->
-<link rel="stylesheet" href="./herc.css">
-
-  <!-- Icons library -->
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js" defer></script>
+  <link rel="stylesheet" href="./herc.css">
+  <script src="./herkwincs.js" defer></script>
 </head>
 
-<body class="min-h-screen">
+<body>
   <div class="site-shell">
-
-    <!-- HEADER -->
     <header class="site-header">
-      <div class="header-inner max-w-6xl mx-auto px-5 sm:px-8 py-5 flex flex-wrap items-center justify-between gap-4">
-
-        <button
-          id="brand-home"
-          type="button"
-          class="sans font-bold tracking-tight text-left"
-          aria-label="Go to homepage"
-        >
-          <span aria-hidden="true">✳</span>
-          <span>For You, Someday</span>
+      <div class="header-inner">
+        <button id="brand-home" class="brand" type="button">
+          <span aria-hidden="true">✳</span> For You, Someday
         </button>
 
-        <nav
-          id="main-nav"
-          aria-label="Main navigation"
-          class="sans flex flex-wrap gap-2 text-sm font-semibold"
-          hidden
-        >
+        <nav id="main-nav" hidden aria-label="Main navigation">
           <button id="nav-home" type="button">Home</button>
           <button id="nav-write" type="button">Write a letter</button>
           <button id="nav-archive" type="button">Archive</button>
         </nav>
-
       </div>
     </header>
 
     <main>
-
-      <!-- PASSWORD PAGE -->
-      <section
-        id="lock-view"
-        class="view max-w-xl mx-auto px-5 sm:px-8 py-20"
-      >
-        <div class="lock-card rounded-[32px] border p-8 sm:p-12 text-center">
-
+      <!-- PASSWORD SCREEN -->
+      <section id="lock-view" class="view lock-layout">
+        <div class="lock-card">
           <div class="lock-flower" aria-hidden="true">✿</div>
-
-          <p class="sans uppercase tracking-[.22em] mb-4">
-            A private little place
+          <p class="eyebrow">A PRIVATE LITTLE PLACE</p>
+          <h1 id="lock-title">For you, someday.</h1>
+          <p id="lock-description" class="muted">
+            These letters are tucked away for you. Enter the password to open the memories.
           </p>
 
-          <h1 id="lock-title" class="font-semibold mb-4">
-            For you, someday.
-          </h1>
-
-          <p id="lock-description" class="leading-relaxed mb-7">
-            These letters are tucked away for you.
-            Enter the password to open the memories.
-          </p>
-
-          <form id="unlock-form" novalidate>
-            <label
-              class="sans block font-semibold mb-2 text-left"
-              for="reader-password"
-            >
-              Password
-            </label>
-
-            <input
-              id="reader-password"
-              class="paper-field sans mb-4"
-              type="password"
-              autocomplete="current-password"
-              required
-              aria-describedby="unlock-error"
-            >
-
-            <button
-              id="unlock-button"
-              class="canva-button sans rounded-full px-7 py-3 font-bold lift"
-              type="submit"
-            >
+          <form id="unlock-form">
+            <label for="reader-password">Password</label>
+            <input id="reader-password" class="paper-field" type="password"
+              autocomplete="current-password" required>
+            <button class="primary-button" type="submit">
               Open the letters <span aria-hidden="true">→</span>
             </button>
-
-            <p
-              id="unlock-error"
-              class="sans mt-4"
-              role="alert"
-              hidden
-            >
-              That password doesn’t open this collection.
-              Please try again.
+            <p id="unlock-error" class="error-message" role="alert" hidden>
+              That password doesn't open this collection. Please try again.
             </p>
           </form>
 
-          <p class="sans text-xs mt-8 lock-note">
-            A little space for words meant to be kept close.
-          </p>
-
+          <p class="lock-note">A little space for words meant to be kept close.</p>
         </div>
       </section>
 
-      <!-- HOME PAGE -->
+      <!-- HOME -->
       <section id="home-view" class="view" hidden>
-
-        <div class="hero-section max-w-6xl mx-auto px-5 sm:px-8 pt-14 pb-16 lg:pt-20 lg:pb-24 grid lg:grid-cols-[1.07fr_.93fr] gap-12 lg:gap-16 items-center">
-
+        <div class="hero-section">
           <div class="hero-copy">
-            <p class="sans uppercase tracking-[.22em] mb-5">
-              A little place to keep unsaid words
+            <p class="eyebrow">A LITTLE PLACE TO KEEP UNSAID WORDS</p>
+            <h1>For you,<br><span>someday.</span></h1>
+            <p class="hero-description">
+              Some words need room to breathe. Write a letter, choose a song,
+              and tuck it away until the moment feels right.
             </p>
-
-            <h1 class="leading-[1.12] font-semibold mb-7">
-              For you, someday.
-            </h1>
-
-            <p class="leading-relaxed max-w-xl mb-8">
-              Some words need room to breathe. Write a letter,
-              choose a song, and tuck it away until the moment
-              feels right.
-            </p>
-
-            <button
-              id="hero-write"
-              type="button"
-              class="canva-button sans rounded-full px-7 py-4 font-bold lift"
-            >
+            <button id="hero-write" class="primary-button" type="button">
               Write a letter <span aria-hidden="true">→</span>
             </button>
-
-            <p class="sans mt-5 leading-relaxed hero-note">
-              Written with love <span aria-hidden="true">·</span>
-              Kept in this browser
-            </p>
+            <p class="hero-note">Written with love · Kept in this browser</p>
           </div>
 
           <div class="hero-image-wrap">
-            <div class="hero-image-decoration" aria-hidden="true">✦</div>
-            <img
-              class="hero-image w-full object-cover rounded-[38px]"
+            <span class="image-sparkle" aria-hidden="true">✦</span>
+            <img class="hero-image"
               src="https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80"
-              alt="A handwritten letter on paper"
-            >
-            <p class="sans image-caption">
-              For all the things words can hold.
-            </p>
+              alt="A handwritten letter on a desk">
+            <p class="image-caption">For all the things words can hold.</p>
           </div>
-
         </div>
 
-        <!-- LETTER COLLECTION -->
-        <section id="collection-section" class="collection-section w-full py-14 sm:py-20">
-          <div class="max-w-6xl mx-auto px-5 sm:px-8">
-
-            <p class="sans uppercase tracking-[.22em] mb-3">
-              The little collection
-            </p>
-
-            <h2 class="font-semibold mb-3">
-              Letters in envelopes
-            </h2>
-
-            <p class="mb-8 max-w-xl">
-              Open an envelope whenever you’re ready to read.
+        <section class="collection-section">
+          <div class="section-inner">
+            <p class="eyebrow">THE LITTLE COLLECTION</p>
+            <h2>Letters in envelopes</h2>
+            <p class="section-description">
+              Open an envelope whenever you're ready to read.
               Every letter has its own little place here.
             </p>
-
-            <div
-              id="envelope-list"
-              class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
-            ></div>
-
-            <p id="envelope-empty" class="empty-message py-8">
+            <div id="envelope-list" class="letter-grid"></div>
+            <p id="envelope-empty" class="empty-message">
               No letters tucked away yet. Begin with a blank page.
             </p>
-
           </div>
         </section>
       </section>
 
-      <!-- WRITE A LETTER PAGE -->
-      <section
-        id="write-view"
-        class="view page-container max-w-4xl mx-auto px-5 sm:px-8 py-14"
-        hidden
-      >
-        <p class="sans uppercase tracking-[.22em] mb-3">
-          The writing desk
-        </p>
+      <!-- WRITE -->
+      <section id="write-view" class="view page-container" hidden>
+        <p class="eyebrow">THE WRITING DESK</p>
+        <h2>Start with a blank page.</h2>
+        <p class="page-intro">A title, your words, and maybe a song that says the rest.</p>
 
-        <h2 class="font-semibold mb-3">
-          Start with a blank page.
-        </h2>
-
-        <p class="mb-8">
-          A title, your words, and maybe a song that says the rest.
-        </p>
-
-        <div class="form-card rounded-[32px] border p-6 sm:p-10">
-
-          <form id="letter-form" novalidate>
-
-            <div class="mb-6">
-              <label
-                class="sans block font-semibold mb-2"
-                for="title"
-              >
-                Title <span aria-hidden="true">*</span>
-              </label>
-
-              <input
-                id="title"
-                name="title"
-                class="paper-field sans"
-                maxlength="150"
-                placeholder="A little title for your letter"
-                required
-              >
+        <div class="form-card">
+          <form id="letter-form">
+            <div class="form-group">
+              <label for="title">Title <span aria-hidden="true">*</span></label>
+              <input id="title" class="paper-field" maxlength="150"
+                placeholder="A little title for your letter" required>
             </div>
 
-            <div class="mb-6">
-              <label
-                class="sans block font-semibold mb-2"
-                for="message"
-              >
-                Your letter <span aria-hidden="true">*</span>
-              </label>
-
-              <textarea
-                id="message"
-                name="message"
-                class="paper-field letter-paper resize-y"
-                maxlength="10000"
-                placeholder="Write whatever your heart wants to say..."
-                required
-              ></textarea>
-
-              <p class="sans text-xs mt-2">
-                Take your time. There’s no need to rush the words.
-              </p>
+            <div class="form-group">
+              <label for="message">Your letter <span aria-hidden="true">*</span></label>
+              <textarea id="message" class="paper-field letter-input"
+                maxlength="10000" placeholder="Write whatever your heart wants to say..."
+                required></textarea>
+              <p class="field-hint">Take your time. There's no need to rush the words.</p>
             </div>
 
-            <div class="song-fields grid sm:grid-cols-2 gap-5 mb-6">
-
-              <div>
-                <label
-                  class="sans block font-semibold mb-2"
-                  for="artist"
-                >
-                  Artist
-                </label>
-
-                <input
-                  id="artist"
-                  name="artist"
-                  class="paper-field sans"
-                  maxlength="150"
-                  placeholder="Artist name"
-                >
+            <div class="form-row">
+              <div class="form-group">
+                <label for="artist">Artist</label>
+                <input id="artist" class="paper-field" maxlength="150" placeholder="Artist name">
               </div>
-
-              <div>
-                <label
-                  class="sans block font-semibold mb-2"
-                  for="song-title"
-                >
-                  Song title
-                </label>
-
-                <input
-                  id="song-title"
-                  name="song_title"
-                  class="paper-field sans"
-                  maxlength="150"
-                  placeholder="A song that reminds you"
-                >
+              <div class="form-group">
+                <label for="song-title">Song title</label>
+                <input id="song-title" class="paper-field" maxlength="150"
+                  placeholder="A song that reminds you">
               </div>
-
             </div>
 
-            <div class="mb-7">
-              <label
-                class="sans block font-semibold mb-2"
-                for="spotify-link"
-              >
-                Spotify track link <span class="optional-label">(optional)</span>
-              </label>
-
-              <input
-                id="spotify-link"
-                name="spotify_link"
-                class="paper-field sans"
-                type="url"
-                inputmode="url"
+            <div class="form-group">
+              <label for="spotify-link">Spotify track link <span class="optional-label">(optional)</span></label>
+              <input id="spotify-link" class="paper-field" type="url"
                 placeholder="https://open.spotify.com/track/..."
-                aria-describedby="spotify-hint"
-              >
-
-              <p id="spotify-hint" class="sans text-sm mt-2">
-                Paste a Spotify track link to include a player with your letter.
+                aria-describedby="spotify-hint">
+              <p id="spotify-hint" class="field-hint">
+                Paste a Spotify track link if you'd like to include a player.
               </p>
             </div>
 
-            <p
-              id="form-error"
-              role="alert"
-              class="sans mb-4"
-              hidden
-            ></p>
+            <p id="form-error" class="error-message" role="alert" hidden></p>
 
-            <div class="flex flex-wrap gap-3">
-              <button
-                class="canva-button sans rounded-full px-7 py-3 font-bold lift"
-                type="submit"
-              >
-                Preview letter <span aria-hidden="true">→</span>
-              </button>
-
-              <button
-                id="writer-cancel"
-                class="secondary-button sans rounded-full px-7 py-3 font-semibold lift"
-                type="button"
-              >
-                Back home
-              </button>
+            <div class="button-row">
+              <button class="primary-button" type="submit">Preview letter →</button>
+              <button id="writer-cancel" class="secondary-button" type="button">Back home</button>
             </div>
-
           </form>
         </div>
       </section>
 
-      <!-- LETTER PREVIEW PAGE -->
-      <section
-        id="preview-view"
-        class="view page-container max-w-4xl mx-auto px-5 sm:px-8 py-14"
-        hidden
-      >
-        <p class="sans uppercase tracking-[.22em] mb-3">
-          Before you tuck it away
-        </p>
+      <!-- PREVIEW -->
+      <section id="preview-view" class="view page-container" hidden>
+        <p class="eyebrow">BEFORE YOU TUCK IT AWAY</p>
+        <h2>A first look at your letter.</h2>
 
-        <h2 class="font-semibold mb-7">
-          A first look at your letter
-        </h2>
-
-        <article class="letter-paper preview-card rounded-[30px] border p-6 sm:p-10">
-
-          <h3
-            id="preview-title"
-            class="font-semibold mb-7 break-words"
-          ></h3>
-
-          <p
-            id="preview-message"
-            class="whitespace-pre-wrap break-words leading-[2.35]"
-          ></p>
-
-          <div
-            id="preview-song"
-            class="sans mt-10 pt-5 border-t text-sm break-words"
-          ></div>
-
+        <article class="letter-sheet">
+          <h3 id="preview-title"></h3>
+          <p id="preview-message" class="letter-content"></p>
+          <div id="preview-song" class="song-preview"></div>
         </article>
 
-        <div class="flex flex-wrap gap-3 mt-7">
-          <button
-            id="save-letter"
-            class="canva-button sans rounded-full px-7 py-3 font-bold lift"
-            type="button"
-          >
-            Save this letter
-          </button>
-
-          <button
-            id="edit-letter"
-            class="secondary-button sans rounded-full px-7 py-3 font-semibold lift"
-            type="button"
-          >
-            Keep writing
-          </button>
+        <div class="button-row preview-actions">
+          <button id="save-letter" class="primary-button" type="button">Save this letter</button>
+          <button id="edit-letter" class="secondary-button" type="button">Keep writing</button>
         </div>
-
-        <p
-          id="save-error"
-          class="sans mt-4"
-          role="alert"
-          hidden
-        ></p>
+        <p id="save-error" class="error-message" role="alert" hidden></p>
       </section>
 
-      <!-- ARCHIVE PAGE -->
-      <section
-        id="archive-view"
-        class="view page-container max-w-6xl mx-auto px-5 sm:px-8 py-14"
-        hidden
-      >
-        <p class="sans uppercase tracking-[.22em] mb-3">
-          Every word, kept close
-        </p>
+      <!-- ARCHIVE -->
+      <section id="archive-view" class="view page-container wide-container" hidden>
+        <p class="eyebrow">EVERY WORD, KEPT CLOSE</p>
+        <h2>The archive.</h2>
+        <p class="page-intro">Find a letter by its title, words, artist, or song.</p>
 
-        <h2 class="font-semibold mb-3">
-          The archive
-        </h2>
+        <div class="form-group search-group">
+          <label for="archive-search">Search letters</label>
+          <input id="archive-search" class="paper-field" type="search"
+            autocomplete="off" placeholder="Search your collection...">
+        </div>
 
-        <p class="mb-7">
-          Find a letter by its words or by its song.
-        </p>
-
-        <label
-          class="sans block font-semibold mb-2"
-          for="archive-search"
-        >
-          Search letters
-        </label>
-
-        <input
-          id="archive-search"
-          class="paper-field sans archive-search mb-8"
-          type="search"
-          autocomplete="off"
-          placeholder="Search titles, words, or songs..."
-        >
-
-        <div
-          id="archive-list"
-          class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
-        ></div>
-
-        <p id="archive-empty" class="empty-message py-8" hidden>
+        <div id="archive-list" class="letter-grid"></div>
+        <p id="archive-empty" class="empty-message" hidden>
           No letters found. Try another search, or write the first one.
         </p>
 
-        <div id="archive-actions" class="archive-actions mt-12 border-t pt-8 flex flex-wrap gap-3">
-          <button
-            id="download-button"
-            class="secondary-button sans rounded-full px-6 py-3 font-semibold lift"
-            type="button"
-          >
-            Download letters as HTML <span aria-hidden="true">↓</span>
+        <div id="archive-actions" class="archive-actions">
+          <button id="download-button" class="secondary-button" type="button">
+            Download letters as HTML ↓
           </button>
-
-          <button
-            id="delete-all-button"
-            class="danger-button sans rounded-full px-6 py-3 font-semibold lift"
-            type="button"
-          >
+          <button id="delete-all-button" class="danger-button" type="button">
             Delete all letters
           </button>
         </div>
 
-        <div
-          id="delete-confirmation"
-          class="mt-5 rounded-3xl border p-5"
-          hidden
-        >
-          <p class="mb-4">
-            Delete every saved letter from this browser?
-            This cannot be undone. Download a copy first if
-            you want to keep them.
-          </p>
-
-          <div class="flex flex-wrap gap-3">
-            <button
-              id="confirm-delete"
-              class="danger-button sans rounded-full px-5 py-2 font-semibold"
-              type="button"
-            >
-              Yes, delete all letters
-            </button>
-
-            <button
-              id="cancel-delete"
-              class="secondary-button sans rounded-full px-5 py-2 font-semibold"
-              type="button"
-            >
-              Keep my letters
-            </button>
+        <div id="delete-confirmation" class="confirmation-card" hidden>
+          <p>Delete every saved letter from this browser? This cannot be undone.</p>
+          <div class="button-row">
+            <button id="confirm-delete" class="danger-button" type="button">Yes, delete all</button>
+            <button id="cancel-delete" class="secondary-button" type="button">Keep my letters</button>
           </div>
         </div>
-
-        <p
-          id="archive-status"
-          class="sans mt-4"
-          role="status"
-          aria-live="polite"
-        ></p>
+        <p id="archive-status" class="status-message" role="status" aria-live="polite"></p>
       </section>
 
-      <!-- OPEN LETTER PAGE -->
-      <section
-        id="letter-view"
-        class="view page-container max-w-4xl mx-auto px-5 sm:px-8 py-14"
-        hidden
-      >
-        <button
-          id="back-to-archive"
-          class="secondary-button sans mb-7 rounded-full px-6 py-3 font-semibold"
-          type="button"
-        >
-          <span aria-hidden="true">←</span> Back to archive
+      <!-- OPEN LETTER -->
+      <section id="letter-view" class="view page-container" hidden>
+        <button id="back-to-archive" class="secondary-button back-button" type="button">
+          ← Back to archive
         </button>
 
-        <article class="letter-paper opened-letter rounded-[30px] border p-6 sm:p-12">
-
-          <p class="sans uppercase tracking-[.22em] mb-5">
-            A letter for you
-          </p>
-
-          <h2
-            id="letter-title"
-            class="font-semibold break-words mb-3"
-          ></h2>
-
-          <p
-            id="letter-date"
-            class="sans text-sm mb-9"
-          ></p>
-
-          <p
-            id="letter-message"
-            class="whitespace-pre-wrap break-words leading-[2.35]"
-          ></p>
-
-          <div
-            id="letter-music"
-            class="sans mt-12 pt-6 border-t"
-          ></div>
-
+        <article class="letter-sheet opened-letter">
+          <p class="eyebrow">A LETTER FOR YOU</p>
+          <h2 id="letter-title"></h2>
+          <p id="letter-date" class="letter-date"></p>
+          <p id="letter-message" class="letter-content"></p>
+          <div id="letter-music" class="song-preview"></div>
         </article>
 
-        <button
-          id="letter-home"
-          class="canva-button sans mt-7 rounded-full px-6 py-3 font-semibold"
-          type="button"
-        >
-          Back home <span aria-hidden="true">→</span>
-        </button>
+        <button id="letter-home" class="primary-button" type="button">Back home →</button>
       </section>
-
     </main>
 
-    <!-- FOOTER -->
-    <footer id="site-footer" class="site-footer w-full">
-      <div class="max-w-6xl mx-auto px-5 sm:px-8 py-8 flex flex-wrap justify-between gap-4">
-        <p>
-          For You, Someday <span aria-hidden="true">·</span>
-          A little space for honest words.
-        </p>
-
-        <p>
-          Letters stay in this browser unless you download them.
-        </p>
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <p>For You, Someday · A little space for honest words.</p>
+        <p>Letters stay in this browser unless you download them.</p>
       </div>
     </footer>
-
   </div>
-
-  <!-- Your JavaScript -->
-  <script src="herkwincs.js" defer></script>
 </body>
 </html>
