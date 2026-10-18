@@ -1,852 +1,512 @@
+"use strict";
+
 (() => {
-  'use strict';
+  // Change these passwords to your own.
+  const READER_PASSWORD = "040309";
+  const OWNER_PASSWORD = "041509";
 
-  // ==========================================
-  // CONFIGURATION
-  // ==========================================
-
-  const STORAGE_KEY = 'for-you-someday-letters-v1';
-
-  // Change these passwords if you want.
-  // These are only a casual access gate, not secure authentication.
-  const READER_PASSWORD = '040309';
-  const OWNER_PASSWORD = '041509';
-
-  const VIEWS = [
-    'lock',
-    'home',
-    'write',
-    'preview',
-    'archive',
-    'letter'
-  ];
+  const STORAGE_KEY = "for-you-someday-letters-v2";
 
   const $ = (id) => document.getElementById(id);
 
+  const views = [
+    "lock-view",
+    "home-view",
+    "write-view",
+    "preview-view",
+    "archive-view",
+    "letter-view"
+  ];
+
   let letters = loadLetters();
-  let draft = null;
   let readerUnlocked = false;
   let ownerMode = false;
-  let writerRequested = location.hash === '#write';
-
-  // ==========================================
-  // STORAGE
-  // ==========================================
+  let writerRequested = false;
+  let draft = null;
+  let openedLetterId = null;
 
   function loadLetters() {
     try {
-      const saved = JSON.parse(
-        localStorage.getItem(STORAGE_KEY) || '[]'
-      );
-
-      if (!Array.isArray(saved)) {
-        return [];
-      }
-
-      return saved.filter((letter) => (
-        letter &&
-        typeof letter.id === 'string' &&
-        typeof letter.title === 'string' &&
-        typeof letter.message === 'string'
-      ));
-    } catch (error) {
-      console.error('Could not load saved letters:', error);
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      return Array.isArray(saved)
+        ? saved.filter((item) =>
+            item &&
+            typeof item.id === "string" &&
+            typeof item.title === "string" &&
+            typeof item.message === "string"
+          )
+        : [];
+    } catch {
       return [];
     }
   }
 
-  function saveLetters(updatedLetters) {
+  function persistLetters() {
     try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(updatedLetters)
-      );
-
-      letters = updatedLetters;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(letters));
       return true;
-    } catch (error) {
-      console.error('Could not save letters:', error);
+    } catch {
       return false;
     }
   }
 
-  function createId() {
-    if (
-      window.crypto &&
-      typeof window.crypto.randomUUID === 'function'
-    ) {
+  function makeId() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
       return window.crypto.randomUUID();
     }
-
-    return (
-      Date.now().toString(36) +
-      '-' +
-      Math.random().toString(36).slice(2)
-    );
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 
-  // ==========================================
-  // PAGE NAVIGATION
-  // ==========================================
+  function formatDate(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Date unavailable";
 
-  function showView(viewName) {
-    if (!VIEWS.includes(viewName)) {
+    return new Intl.DateTimeFormat("en", {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    }).format(date);
+  }
+
+  function showView(viewId) {
+    if (!views.includes(viewId)) return;
+
+    views.forEach((id) => {
+      $(id).hidden = id !== viewId;
+    });
+
+    $("main-nav").hidden = !readerUnlocked;
+    $("site-footer")?.removeAttribute("hidden");
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    if (viewId === "home-view") renderEnvelopes();
+    if (viewId === "archive-view") renderArchive();
+  }
+
+  function showLock(forWriting = false) {
+    writerRequested = forWriting;
+    $("lock-title").textContent = forWriting
+      ? "A page for the writer."
+      : "For you, someday.";
+
+    $("lock-description").textContent = forWriting
+      ? "Enter the writer password to create and save a new letter."
+      : "These letters are tucked away for you. Enter the password to open the memories.";
+
+    $("reader-password").value = "";
+    $("unlock-error").hidden = true;
+    showView("lock-view");
+    $("reader-password").focus();
+  }
+
+  function goHome() {
+    if (!readerUnlocked) {
+      showLock(false);
       return;
     }
 
-    if (!readerUnlocked && viewName !== 'lock') {
-      viewName = 'lock';
-    }
-
-    if (
-      !ownerMode &&
-      ['write', 'preview'].includes(viewName)
-    ) {
-      viewName = 'lock';
-    }
-
-    VIEWS.forEach((name) => {
-      const section = $(name + '-view');
-
-      if (section) {
-        section.hidden = name !== viewName;
-      }
-    });
-
-    const isLocked = viewName === 'lock';
-
-    document.body.classList.toggle('locked', isLocked);
-    document.body.classList.toggle(
-      'reader-mode',
-      readerUnlocked && !ownerMode
-    );
-
-    $('main-nav').hidden = isLocked;
-
-    if (isLocked) {
-      $('lock-title').textContent = writerRequested
-        ? 'The writing desk.'
-        : 'For you, someday.';
-
-      $('lock-description').textContent = writerRequested
-        ? 'Enter the writer password to create and manage letters.'
-        : 'These letters are tucked away for you. Enter the password to open the memories.';
-    }
-
-    if (viewName === 'home') {
-      renderEnvelopes();
-    }
-
-    if (viewName === 'archive') {
-      renderArchive();
-    }
-
-    if (viewName === 'write') {
-      $('title').focus();
-    }
-
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    showView("home-view");
   }
 
   function openWriter() {
-    if (ownerMode && readerUnlocked) {
-      showView('write');
+    if (ownerMode) {
+      clearForm();
+      showView("write-view");
+      $("title").focus();
       return;
     }
 
-    writerRequested = true;
-
-    // The URL hash can open the writer login directly.
-    if (location.hash !== '#write') {
-      history.replaceState(
-        null,
-        '',
-        location.pathname + location.search + '#write'
-      );
-    }
-
-    $('unlock-error').hidden = true;
-    $('reader-password').value = '';
-
-    showView('lock');
-    $('reader-password').focus();
+    showLock(true);
   }
 
-  // ==========================================
-  // PASSWORD FORM
-  // ==========================================
-
-  $('unlock-form').addEventListener('submit', (event) => {
-    event.preventDefault();
-
-    const passwordInput = $('reader-password');
-    const errorMessage = $('unlock-error');
-
-    const enteredPassword = passwordInput.value;
-    const expectedPassword = writerRequested
-      ? OWNER_PASSWORD
-      : READER_PASSWORD;
-
-    if (enteredPassword !== expectedPassword) {
-      errorMessage.hidden = false;
-      passwordInput.focus();
-      passwordInput.select();
-      return;
-    }
-
-    errorMessage.hidden = true;
-    passwordInput.value = '';
-
-    readerUnlocked = true;
-    ownerMode = writerRequested;
-    writerRequested = false;
-
-    // Remove the special writer URL after successful login.
-    if (location.hash === '#write') {
-      history.replaceState(
-        null,
-        '',
-        location.pathname + location.search
-      );
-    }
-
-    document.body.classList.remove('locked');
-    document.body.classList.toggle(
-      'reader-mode',
-      !ownerMode
-    );
-
-    $('main-nav').hidden = false;
-
-    showView(ownerMode ? 'write' : 'home');
-  });
-
-  // ==========================================
-  // GENERAL HELPERS
-  // ==========================================
-
-  function createTextElement(tag, text, className = '') {
-    const element = document.createElement(tag);
-
-    element.textContent = String(text ?? '');
-
-    if (className) {
-      element.className = className;
-    }
-
-    return element;
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[character]);
   }
 
-  function formatDate(dateString) {
-    const date = new Date(dateString);
-
-    if (Number.isNaN(date.getTime())) {
-      return 'Date unavailable';
-    }
-
-    return date.toLocaleDateString('en', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  }
-
-  function makeSpotifyTrackId(value) {
-    if (!value) {
-      return null;
-    }
+  function getSpotifyTrackId(value) {
+    if (!value) return null;
 
     try {
-      const parsedUrl = new URL(value);
+      const url = new URL(value.trim());
+      const allowedHosts = [
+        "open.spotify.com",
+        "www.open.spotify.com"
+      ];
 
-      if (
-        parsedUrl.protocol !== 'https:' ||
-        parsedUrl.hostname !== 'open.spotify.com'
-      ) {
-        return null;
-      }
+      if (!allowedHosts.includes(url.hostname)) return null;
 
-      const match = parsedUrl.pathname.match(
-        /^\/(?:intl-[a-z]{2}\/)?track\/([A-Za-z0-9]{22})\/?$/
-      );
-
+      const match = url.pathname.match(/^\/(?:intl-[a-z-]+\/)?track\/([a-zA-Z0-9]+)\/?$/);
       return match ? match[1] : null;
     } catch {
       return null;
     }
   }
 
-  // ==========================================
-  // SONG DISPLAY
-  // ==========================================
-
-  function renderSong(container, letter, showPlayer = false) {
+  function renderSong(container, letter) {
     container.replaceChildren();
 
-    const artist = letter.artist || '';
-    const songTitle = letter.song_title || '';
-    const spotifyLink = letter.spotify_link || '';
+    const hasSong = Boolean(letter.artist || letter.songTitle || letter.spotifyLink);
+    if (!hasSong) return;
 
-    if (!artist && !songTitle && !spotifyLink) {
-      return;
+    const heading = document.createElement("p");
+    heading.textContent = "A song to keep with this letter";
+    heading.className = "song-heading";
+    container.append(heading);
+
+    const details = [letter.songTitle, letter.artist].filter(Boolean).join(" — ");
+    if (details) {
+      const detail = document.createElement("p");
+      detail.textContent = details;
+      container.append(detail);
     }
 
-    const songLabel = [songTitle, artist]
-      .filter(Boolean)
-      .join(' — ');
+    const trackId = getSpotifyTrackId(letter.spotifyLink);
 
-    container.appendChild(
-      createTextElement(
-        'p',
-        songLabel || 'A song for this letter',
-        'font-semibold mb-3 break-words'
-      )
-    );
+    if (letter.spotifyLink && trackId) {
+      const link = document.createElement("a");
+      link.href = `https://open.spotify.com/track/${trackId}`;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "Open this song on Spotify ↗";
+      container.append(link);
 
-    const trackId = makeSpotifyTrackId(spotifyLink);
-
-    if (!trackId) {
-      if (spotifyLink) {
-        container.appendChild(
-          createTextElement(
-            'p',
-            'A valid Spotify track link was not provided.',
-            'text-sm'
-          )
-        );
-      }
-
-      return;
+      const iframe = document.createElement("iframe");
+      iframe.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator`;
+      iframe.title = "Spotify song player";
+      iframe.loading = "lazy";
+      iframe.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
+      container.append(iframe);
+    } else if (letter.spotifyLink) {
+      const note = document.createElement("p");
+      note.textContent = "The Spotify link wasn't recognized as a track link.";
+      container.append(note);
     }
-
-    if (showPlayer) {
-      const player = document.createElement('iframe');
-
-      player.src =
-        'https://open.spotify.com/embed/track/' + trackId;
-
-      player.title =
-        'Spotify player for ' + (songTitle || 'this letter');
-
-      player.loading = 'lazy';
-      player.allow = 'encrypted-media';
-      player.className = 'w-full rounded-xl';
-      player.style.height = '152px';
-      player.style.border = '0';
-
-      container.appendChild(player);
-    }
-
-    const link = document.createElement('a');
-
-    link.href = 'https://open.spotify.com/track/' + trackId;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.className = 'inline-block mt-3 underline';
-    link.textContent = 'Listen on Spotify ↗';
-
-    container.appendChild(link);
   }
 
-  // ==========================================
-  // ENVELOPES
-  // ==========================================
+  function makeLetterCard(letter) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "letter-card";
+    button.addEventListener("click", () => openLetter(letter.id));
 
-  function createEnvelope(letter) {
-    const button = document.createElement('button');
+    const icon = document.createElement("span");
+    icon.className = "card-icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = "✉";
 
-    button.type = 'button';
-    button.className = 'envelope lift w-full p-5 text-left';
+    const title = document.createElement("span");
+    title.className = "card-title";
+    title.textContent = letter.title;
 
-    button.setAttribute(
-      'aria-label',
-      'Read letter: ' + letter.title
-    );
+    const date = document.createElement("span");
+    date.className = "card-date";
+    date.textContent = formatDate(letter.createdAt);
 
-    const label = document.createElement('span');
-    label.className = 'envelope-label block p-4 mt-9';
+    button.append(icon, title, date);
 
-    label.appendChild(
-      createTextElement(
-        'span',
-        letter.title || 'Untitled letter',
-        'block font-semibold break-words'
-      )
-    );
-
-    label.appendChild(
-      createTextElement(
-        'span',
-        formatDate(letter.created_at),
-        'sans block mt-1 text-xs'
-      )
-    );
-
-    button.appendChild(label);
-
-    button.addEventListener('click', () => {
-      openLetter(letter.id);
-    });
+    if (letter.songTitle || letter.artist) {
+      const song = document.createElement("span");
+      song.className = "card-song";
+      song.textContent = [letter.songTitle, letter.artist].filter(Boolean).join(" — ");
+      button.append(song);
+    }
 
     return button;
   }
 
   function renderEnvelopes() {
-    const container = $('envelope-list');
-    const emptyMessage = $('envelope-empty');
+    const list = $("envelope-list");
+    list.replaceChildren();
 
-    if (!container || !emptyMessage) {
-      return;
-    }
-
-    const recentLetters = letters
-      .slice()
-      .reverse()
-      .slice(0, 6);
-
-    container.replaceChildren(
-      ...recentLetters.map(createEnvelope)
+    const sorted = [...letters].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
     );
 
-    emptyMessage.hidden = letters.length > 0;
+    sorted.forEach((letter) => list.append(makeLetterCard(letter)));
+    $("envelope-empty").hidden = sorted.length > 0;
   }
 
-  // ==========================================
-  // ARCHIVE AND SEARCH
-  // ==========================================
-
   function renderArchive() {
-    const container = $('archive-list');
-    const emptyMessage = $('archive-empty');
-    const searchInput = $('archive-search');
+    const list = $("archive-list");
+    const query = $("archive-search").value.trim().toLowerCase();
 
-    if (!container || !emptyMessage || !searchInput) {
-      return;
-    }
+    list.replaceChildren();
 
-    const query = searchInput.value
-      .trim()
-      .toLocaleLowerCase();
-
-    const results = letters
-      .slice()
-      .reverse()
+    const filtered = [...letters]
       .filter((letter) => {
-        const searchableText = [
+        const searchable = [
           letter.title,
           letter.message,
           letter.artist,
-          letter.song_title
-        ]
-          .map((value) => String(value || ''))
-          .join(' ')
-          .toLocaleLowerCase();
+          letter.songTitle
+        ].join(" ").toLowerCase();
 
-        return searchableText.includes(query);
-      });
+        return searchable.includes(query);
+      })
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    container.replaceChildren(
-      ...results.map(createEnvelope)
-    );
+    filtered.forEach((letter) => list.append(makeLetterCard(letter)));
 
-    emptyMessage.hidden = results.length > 0;
+    $("archive-empty").hidden = filtered.length > 0;
+    $("archive-actions").hidden = letters.length === 0;
   }
-
-  // ==========================================
-  // OPEN A LETTER
-  // ==========================================
 
   function openLetter(id) {
     const letter = letters.find((item) => item.id === id);
+    if (!letter) return;
 
-    if (!letter) {
-      showView('archive');
-      return;
-    }
-
-    $('letter-title').textContent = letter.title;
-    $('letter-message').textContent = letter.message;
-    $('letter-date').textContent = formatDate(letter.created_at);
-
-    renderSong($('letter-music'), letter, true);
-
-    showView('letter');
+    openedLetterId = id;
+    $("letter-title").textContent = letter.title;
+    $("letter-date").textContent = formatDate(letter.createdAt);
+    $("letter-message").textContent = letter.message;
+    renderSong($("letter-music"), letter);
+    showView("letter-view");
   }
 
-  // ==========================================
-  // WRITE AND PREVIEW
-  // ==========================================
+  function clearForm() {
+    $("letter-form").reset();
+    $("form-error").hidden = true;
+    draft = null;
+  }
 
-  $('letter-form').addEventListener('submit', (event) => {
-    event.preventDefault();
-
-    if (!ownerMode || !readerUnlocked) {
-      showView('lock');
-      return;
-    }
-
-    const title = $('title').value.trim();
-    const message = $('message').value.trim();
-    const artist = $('artist').value.trim();
-    const songTitle = $('song-title').value.trim();
-    const spotifyLink = $('spotify-link').value.trim();
-
-    const errorMessage = $('form-error');
-
-    errorMessage.hidden = true;
-    errorMessage.textContent = '';
+  function collectDraft() {
+    const title = $("title").value.trim();
+    const message = $("message").value.trim();
+    const artist = $("artist").value.trim();
+    const songTitle = $("song-title").value.trim();
+    const spotifyLink = $("spotify-link").value.trim();
 
     if (!title || !message) {
-      errorMessage.textContent =
-        'Please enter a title and write your letter.';
-
-      errorMessage.hidden = false;
-      (!title ? $('title') : $('message')).focus();
-      return;
+      $("form-error").textContent = "Please add a title and write your letter before previewing.";
+      $("form-error").hidden = false;
+      return null;
     }
 
-    if (spotifyLink && !makeSpotifyTrackId(spotifyLink)) {
-      errorMessage.textContent =
-        'Please enter a valid Spotify track link, or leave the field blank.';
-
-      errorMessage.hidden = false;
-      $('spotify-link').focus();
-      return;
+    if (spotifyLink) {
+      const trackId = getSpotifyTrackId(spotifyLink);
+      if (!trackId) {
+        $("form-error").textContent = "Please paste a valid Spotify track link, or leave that field empty.";
+        $("form-error").hidden = false;
+        $("spotify-link").focus();
+        return null;
+      }
     }
 
-    draft = {
+    $("form-error").hidden = true;
+
+    return {
+      id: makeId(),
       title,
       message,
       artist,
-      song_title: songTitle,
-      spotify_link: spotifyLink
+      songTitle,
+      spotifyLink,
+      createdAt: new Date().toISOString()
     };
+  }
 
-    $('preview-title').textContent = draft.title;
-    $('preview-message').textContent = draft.message;
-
-    renderSong($('preview-song'), draft, false);
-
-    $('save-error').hidden = true;
-
-    showView('preview');
-  });
-
-  // ==========================================
-  // SAVE A LETTER
-  // ==========================================
-
-  $('save-letter').addEventListener('click', () => {
-    if (!ownerMode || !readerUnlocked || !draft) {
+  function showPreview() {
+    if (!ownerMode) {
+      showLock(true);
       return;
     }
 
-    const newLetter = {
-      ...draft,
-      id: createId(),
-      created_at: new Date().toISOString()
-    };
+    const nextDraft = collectDraft();
+    if (!nextDraft) return;
 
-    const updatedLetters = [
-      ...letters,
-      newLetter
-    ];
+    draft = nextDraft;
+    $("preview-title").textContent = draft.title;
+    $("preview-message").textContent = draft.message;
+    renderSong($("preview-song"), draft);
+    $("save-error").hidden = true;
+    showView("preview-view");
+  }
 
-    const errorMessage = $('save-error');
-
-    if (!saveLetters(updatedLetters)) {
-      errorMessage.textContent =
-        'Your letter could not be saved. Your draft is still here. Please try again.';
-
-      errorMessage.hidden = false;
+  function saveDraft() {
+    if (!ownerMode || !draft) {
+      $("save-error").textContent = "Your letter couldn't be saved. Please return to the writing page and try again.";
+      $("save-error").hidden = false;
       return;
     }
 
-    errorMessage.hidden = true;
+    letters.push(draft);
+
+    if (!persistLetters()) {
+      letters.pop();
+      $("save-error").textContent =
+        "Your browser couldn't save this letter. Check your browser's storage settings and try again.";
+      $("save-error").hidden = false;
+      return;
+    }
+
     draft = null;
+    clearForm();
+    $("archive-status").textContent = "Your letter was saved in this browser.";
+    showView("home-view");
+  }
 
-    $('letter-form').reset();
-    $('archive-status').textContent = '';
-
-    showView('home');
-  });
-
-  // ==========================================
-  // DOWNLOAD LETTERS AS HTML
-  // ==========================================
+  function openArchive() {
+    $("archive-search").value = "";
+    showView("archive-view");
+  }
 
   function downloadLetters() {
-    if (!ownerMode || !readerUnlocked) {
+    if (!letters.length) {
+      $("archive-status").textContent = "There are no letters to download yet.";
       return;
     }
 
-    const safeJson = JSON.stringify(letters)
-      .replace(/</g, '\\u003c')
-      .replace(/>/g, '\\u003e')
-      .replace(/&/g, '\\u0026');
+    const sorted = [...letters].sort(
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+    );
 
-    const exportedHtml = `<!DOCTYPE html>
+    const content = sorted.map((letter) => `
+      <article class="letter">
+        <h2>${escapeHtml(letter.title)}</h2>
+        <p class="date">${escapeHtml(formatDate(letter.createdAt))}</p>
+        <p class="message">${escapeHtml(letter.message).replace(/\n/g, "<br>")}</p>
+        ${letter.songTitle || letter.artist
+          ? `<p class="song">${escapeHtml([letter.songTitle, letter.artist].filter(Boolean).join(" — "))}</p>`
+          : ""}
+        ${letter.spotifyLink
+          ? `<p><a href="${escapeHtml(letter.spotifyLink)}" rel="noopener noreferrer">Open song</a></p>`
+          : ""}
+      </article>
+    `).join("\n");
+
+    const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>For You, Someday — Letters</title>
+<title>For You, Someday — Saved Letters</title>
 <style>
-body {
-  margin: 0;
-  padding: 0;
-  background: #fffaf7;
-  color: #26372e;
-  font: 18px Georgia, serif;
-}
-main {
-  max-width: 760px;
-  margin: auto;
-  padding: 48px 22px;
-}
-h1 {
-  font-size: clamp(2rem, 6vw, 4rem);
-}
-article {
-  background: #fffefa;
-  border: 1px solid #e8dedf;
-  border-radius: 18px;
-  padding: 28px;
-  margin: 24px 0;
-  box-shadow: 0 12px 28px #25263512;
-}
-.message {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  line-height: 1.9;
-}
-small {
-  color: #68786d;
-}
-a {
-  color: #397a54;
-}
+body{max-width:760px;margin:40px auto;padding:0 22px;background:#fffaf7;color:#29392f;font-family:Georgia,serif;line-height:1.9}
+h1{color:#397a54}h2{color:#397a54}
+.letter{margin:35px 0;padding:28px;background:#fffefa;border:1px solid #d9e5d8;border-radius:20px}
+.date,.song{font:14px Arial,sans-serif;color:#69756b}
+.message{white-space:normal;overflow-wrap:anywhere}
+a{color:#397a54}
 </style>
 </head>
 <body>
-<main>
-  <h1>For You, Someday</h1>
-  <p>A little collection of letters, kept close.</p>
-  <div id="letters"></div>
-</main>
-<script id="letter-data" type="application/json">${safeJson}<\/script>
-<script>
-(() => {
-  const data = JSON.parse(
-    document.getElementById('letter-data').textContent
-  );
-
-  const root = document.getElementById('letters');
-
-  for (const letter of data) {
-    const article = document.createElement('article');
-    const heading = document.createElement('h2');
-    const date = document.createElement('small');
-    const message = document.createElement('p');
-
-    heading.textContent = letter.title || 'Untitled letter';
-
-    const parsedDate = new Date(letter.created_at);
-
-    date.textContent = Number.isNaN(parsedDate.getTime())
-      ? ''
-      : parsedDate.toLocaleDateString();
-
-    message.className = 'message';
-    message.textContent = letter.message || '';
-
-    article.append(heading, date, message);
-
-    if (letter.song_title || letter.artist) {
-      const song = document.createElement('p');
-
-      song.textContent = [
-        letter.song_title,
-        letter.artist
-      ].filter(Boolean).join(' — ');
-
-      article.appendChild(song);
-    }
-
-    try {
-      const url = new URL(letter.spotify_link || '');
-      const match = url.pathname.match(
-        /^\\/(?:intl-[a-z]{2}\\/)?track\\/([A-Za-z0-9]{22})\\/?$/
-      );
-
-      if (
-        url.protocol === 'https:' &&
-        url.hostname === 'open.spotify.com' &&
-        match
-      ) {
-        const link = document.createElement('a');
-
-        link.href =
-          'https://open.spotify.com/track/' + match[1];
-
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.textContent = 'Listen on Spotify ↗';
-
-        article.appendChild(link);
-      }
-    } catch {}
-
-    root.appendChild(article);
-  }
-})();
-<\/script>
+<h1>For You, Someday</h1>
+<p>A saved collection of letters.</p>
+${content}
 </body>
 </html>`;
 
-    const file = new Blob(
-      [exportedHtml],
-      { type: 'text/html;charset=utf-8' }
-    );
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "for-you-someday-letters.html";
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
 
-    const url = URL.createObjectURL(file);
-    const link = document.createElement('a');
-
-    link.href = url;
-    link.download = 'for-you-someday-letters.html';
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    window.setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 30000);
-
-    $('archive-status').textContent =
-      'Your letters have been downloaded as an HTML keepsake.';
+    $("archive-status").textContent = "Your download should begin shortly.";
   }
 
-  // ==========================================
-  // DELETE LETTERS
-  // ==========================================
+  function deleteAllLetters() {
+    const previous = letters;
+    letters = [];
 
-  $('delete-all-button').addEventListener('click', () => {
-    if (!ownerMode || !readerUnlocked) {
+    if (!persistLetters()) {
+      letters = previous;
+      $("archive-status").textContent =
+        "Your browser couldn't update storage. No letters were deleted.";
       return;
     }
 
-    $('delete-confirmation').hidden = false;
-    $('confirm-delete').focus();
-  });
+    $("delete-confirmation").hidden = true;
+    $("archive-status").textContent = "All saved letters were deleted from this browser.";
+    renderArchive();
+  }
 
-  $('cancel-delete').addEventListener('click', () => {
-    $('delete-confirmation').hidden = true;
-    $('delete-all-button').focus();
-  });
+  $("unlock-form").addEventListener("submit", (event) => {
+    event.preventDefault();
 
-  $('confirm-delete').addEventListener('click', () => {
-    if (!ownerMode || !readerUnlocked) {
+    const entered = $("reader-password").value;
+
+    if (writerRequested) {
+      if (entered !== OWNER_PASSWORD) {
+        $("unlock-error").textContent = "That isn't the writer password. Please try again.";
+        $("unlock-error").hidden = false;
+        $("reader-password").select();
+        return;
+      }
+
+      readerUnlocked = true;
+      ownerMode = true;
+      writerRequested = false;
+      $("unlock-error").hidden = true;
+      clearForm();
+      showView("write-view");
+      $("title").focus();
       return;
     }
 
-    const status = $('archive-status');
-
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-
-      letters = [];
-      draft = null;
-
-      $('delete-confirmation').hidden = true;
-      status.textContent =
-        'All letters were deleted from this browser.';
-
-      renderArchive();
-      renderEnvelopes();
-
-      $('delete-all-button').focus();
-    } catch (error) {
-      console.error('Could not delete letters:', error);
-
-      status.textContent =
-        'The letters could not be deleted. Please try again.';
-    }
-  });
-
-  // ==========================================
-  // BUTTON EVENTS
-  // ==========================================
-
-  $('brand-home').addEventListener('click', () => {
-    if (readerUnlocked) {
-      showView('home');
-    } else {
-      showView('lock');
-    }
-  });
-
-  $('nav-home').addEventListener('click', () => {
-    showView('home');
-  });
-
-  $('letter-home').addEventListener('click', () => {
-    showView('home');
-  });
-
-  $('nav-write').addEventListener('click', openWriter);
-  $('hero-write').addEventListener('click', openWriter);
-
-  $('nav-archive').addEventListener('click', () => {
-    showView('archive');
-  });
-
-  $('back-to-archive').addEventListener('click', () => {
-    showView('archive');
-  });
-
-  $('writer-cancel').addEventListener('click', () => {
-    draft = null;
-
-    $('letter-form').reset();
-    $('form-error').hidden = true;
-    $('save-error').hidden = true;
-
-    showView('home');
-  });
-
-  $('edit-letter').addEventListener('click', () => {
-    showView('write');
-  });
-
-  $('archive-search').addEventListener('input', renderArchive);
-
-  $('download-button').addEventListener('click', () => {
-    if (!ownerMode || !readerUnlocked) {
-      $('archive-status').textContent =
-        'Only the writer can download the letter collection.';
+    if (entered !== READER_PASSWORD) {
+      $("unlock-error").textContent = "That password doesn't open this collection. Please try again.";
+      $("unlock-error").hidden = false;
+      $("reader-password").select();
       return;
     }
 
-    downloadLetters();
+    readerUnlocked = true;
+    $("unlock-error").hidden = true;
+    showView("home-view");
   });
 
-  // ==========================================
-  // INITIALIZE
-  // ==========================================
+  $("brand-home").addEventListener("click", goHome);
+  $("nav-home").addEventListener("click", goHome);
+  $("hero-write").addEventListener("click", openWriter);
+  $("nav-write").addEventListener("click", openWriter);
+  $("nav-archive").addEventListener("click", openArchive);
 
-  if (writerRequested) {
-    document.body.classList.add('locked');
-    showView('lock');
-  } else {
-    document.body.classList.add('locked');
-    showView('lock');
-  }
+  $("letter-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    showPreview();
+  });
 
-  if (window.lucide) {
-    window.lucide.createIcons();
-  }
+  $("writer-cancel").addEventListener("click", () => {
+    clearForm();
+    goHome();
+  });
+
+  $("edit-letter").addEventListener("click", () => {
+    showView("write-view");
+    $("title").focus();
+  });
+
+  $("save-letter").addEventListener("click", saveDraft);
+
+  $("archive-search").addEventListener("input", renderArchive);
+
+  $("back-to-archive").addEventListener("click", openArchive);
+  $("letter-home").addEventListener("click", goHome);
+
+  $("download-button").addEventListener("click", downloadLetters);
+
+  $("delete-all-button").addEventListener("click", () => {
+    $("delete-confirmation").hidden = false;
+  });
+
+  $("cancel-delete").addEventListener("click", () => {
+    $("delete-confirmation").hidden = true;
+  });
+
+  $("confirm-delete").addEventListener("click", deleteAllLetters);
+
+  // Start on the password screen every time the page is loaded.
+  showView("lock-view");
 })();
