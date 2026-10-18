@@ -8,12 +8,12 @@
 
   const STORAGE_KEY = 'for-you-someday-letters-v1';
 
-  // Change these to your preferred passwords.
-  // Important: passwords stored in JavaScript are not secure.
+  // Change these passwords if you want.
+  // These are only a casual access gate, not secure authentication.
   const READER_PASSWORD = '040309';
   const OWNER_PASSWORD = '041509';
 
-  const VIEW_NAMES = [
+  const VIEWS = [
     'lock',
     'home',
     'write',
@@ -28,6 +28,7 @@
   let draft = null;
   let readerUnlocked = false;
   let ownerMode = false;
+  let writerRequested = location.hash === '#write';
 
   // ==========================================
   // STORAGE
@@ -43,14 +44,12 @@
         return [];
       }
 
-      return saved.filter((letter) => {
-        return (
-          letter &&
-          typeof letter.id === 'string' &&
-          typeof letter.title === 'string' &&
-          typeof letter.message === 'string'
-        );
-      });
+      return saved.filter((letter) => (
+        letter &&
+        typeof letter.id === 'string' &&
+        typeof letter.title === 'string' &&
+        typeof letter.message === 'string'
+      ));
     } catch (error) {
       console.error('Could not load saved letters:', error);
       return [];
@@ -73,7 +72,10 @@
   }
 
   function createId() {
-    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+    if (
+      window.crypto &&
+      typeof window.crypto.randomUUID === 'function'
+    ) {
       return window.crypto.randomUUID();
     }
 
@@ -89,7 +91,7 @@
   // ==========================================
 
   function showView(viewName) {
-    if (!VIEW_NAMES.includes(viewName)) {
+    if (!VIEWS.includes(viewName)) {
       return;
     }
 
@@ -97,11 +99,14 @@
       viewName = 'lock';
     }
 
-    if (!ownerMode && viewName === 'write') {
+    if (
+      !ownerMode &&
+      ['write', 'preview'].includes(viewName)
+    ) {
       viewName = 'lock';
     }
 
-    VIEW_NAMES.forEach((name) => {
+    VIEWS.forEach((name) => {
       const section = $(name + '-view');
 
       if (section) {
@@ -109,10 +114,25 @@
       }
     });
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    const isLocked = viewName === 'lock';
+
+    document.body.classList.toggle('locked', isLocked);
+    document.body.classList.toggle(
+      'reader-mode',
+      readerUnlocked && !ownerMode
+    );
+
+    $('main-nav').hidden = isLocked;
+
+    if (isLocked) {
+      $('lock-title').textContent = writerRequested
+        ? 'The writing desk.'
+        : 'For you, someday.';
+
+      $('lock-description').textContent = writerRequested
+        ? 'Enter the writer password to create and manage letters.'
+        : 'These letters are tucked away for you. Enter the password to open the memories.';
+    }
 
     if (viewName === 'home') {
       renderEnvelopes();
@@ -121,36 +141,39 @@
     if (viewName === 'archive') {
       renderArchive();
     }
+
+    if (viewName === 'write') {
+      $('title').focus();
+    }
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   }
 
   function openWriter() {
-    location.hash = 'write';
-
-    // Run immediately instead of waiting for the hash event.
-    handleRoute();
-  }
-
-  function handleRoute() {
-    if (location.hash === '#write') {
-      ownerMode = false;
-      readerUnlocked = false;
-
-      document.body.classList.add('reader-mode');
-
-      showView('lock');
+    if (ownerMode && readerUnlocked) {
+      showView('write');
       return;
     }
 
-    if (!readerUnlocked) {
-      ownerMode = false;
+    writerRequested = true;
 
-      document.body.classList.add('reader-mode');
-
-      showView('lock');
-      return;
+    // The URL hash can open the writer login directly.
+    if (location.hash !== '#write') {
+      history.replaceState(
+        null,
+        '',
+        location.pathname + location.search + '#write'
+      );
     }
 
-    showView('home');
+    $('unlock-error').hidden = true;
+    $('reader-password').value = '';
+
+    showView('lock');
+    $('reader-password').focus();
   }
 
   // ==========================================
@@ -164,13 +187,11 @@
     const errorMessage = $('unlock-error');
 
     const enteredPassword = passwordInput.value;
-    const isWriterRequest = location.hash === '#write';
-
-    const correctPassword = isWriterRequest
+    const expectedPassword = writerRequested
       ? OWNER_PASSWORD
       : READER_PASSWORD;
 
-    if (enteredPassword !== correctPassword) {
+    if (enteredPassword !== expectedPassword) {
       errorMessage.hidden = false;
       passwordInput.focus();
       passwordInput.select();
@@ -181,18 +202,27 @@
     passwordInput.value = '';
 
     readerUnlocked = true;
-    ownerMode = isWriterRequest;
+    ownerMode = writerRequested;
+    writerRequested = false;
 
+    // Remove the special writer URL after successful login.
+    if (location.hash === '#write') {
+      history.replaceState(
+        null,
+        '',
+        location.pathname + location.search
+      );
+    }
+
+    document.body.classList.remove('locked');
     document.body.classList.toggle(
       'reader-mode',
       !ownerMode
     );
 
-    if (ownerMode) {
-      showView('write');
-    } else {
-      showView('home');
-    }
+    $('main-nav').hidden = false;
+
+    showView(ownerMode ? 'write' : 'home');
   });
 
   // ==========================================
@@ -225,13 +255,13 @@
     });
   }
 
-  function makeSpotifyTrackId(url) {
-    if (!url) {
+  function makeSpotifyTrackId(value) {
+    if (!value) {
       return null;
     }
 
     try {
-      const parsedUrl = new URL(url);
+      const parsedUrl = new URL(value);
 
       if (
         parsedUrl.protocol !== 'https:' ||
@@ -293,9 +323,6 @@
       return;
     }
 
-    const spotifyUrl =
-      'https://open.spotify.com/track/' + trackId;
-
     if (showPlayer) {
       const player = document.createElement('iframe');
 
@@ -316,7 +343,7 @@
 
     const link = document.createElement('a');
 
-    link.href = spotifyUrl;
+    link.href = 'https://open.spotify.com/track/' + trackId;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     link.className = 'inline-block mt-3 underline';
@@ -326,15 +353,14 @@
   }
 
   // ==========================================
-  // ENVELOPES AND LETTER LISTS
+  // ENVELOPES
   // ==========================================
 
   function createEnvelope(letter) {
     const button = document.createElement('button');
 
     button.type = 'button';
-    button.className =
-      'envelope lift w-full p-5 text-left focus-visible:outline';
+    button.className = 'envelope lift w-full p-5 text-left';
 
     button.setAttribute(
       'aria-label',
@@ -342,13 +368,12 @@
     );
 
     const label = document.createElement('span');
-
     label.className = 'envelope-label block p-4 mt-9';
 
     label.appendChild(
       createTextElement(
         'span',
-        letter.title,
+        letter.title || 'Untitled letter',
         'block font-semibold break-words'
       )
     );
@@ -357,7 +382,7 @@
       createTextElement(
         'span',
         formatDate(letter.created_at),
-        'sans block mt-1 text-xs text-[#53665b]'
+        'sans block mt-1 text-xs'
       )
     );
 
@@ -389,6 +414,10 @@
 
     emptyMessage.hidden = letters.length > 0;
   }
+
+  // ==========================================
+  // ARCHIVE AND SEARCH
+  // ==========================================
 
   function renderArchive() {
     const container = $('archive-list');
@@ -449,13 +478,13 @@
   }
 
   // ==========================================
-  // WRITE AND PREVIEW A LETTER
+  // WRITE AND PREVIEW
   // ==========================================
 
   $('letter-form').addEventListener('submit', (event) => {
     event.preventDefault();
 
-    if (!ownerMode) {
+    if (!ownerMode || !readerUnlocked) {
       showView('lock');
       return;
     }
@@ -476,7 +505,6 @@
         'Please enter a title and write your letter.';
 
       errorMessage.hidden = false;
-
       (!title ? $('title') : $('message')).focus();
       return;
     }
@@ -503,6 +531,8 @@
 
     renderSong($('preview-song'), draft, false);
 
+    $('save-error').hidden = true;
+
     showView('preview');
   });
 
@@ -511,7 +541,7 @@
   // ==========================================
 
   $('save-letter').addEventListener('click', () => {
-    if (!ownerMode || !draft) {
+    if (!ownerMode || !readerUnlocked || !draft) {
       return;
     }
 
@@ -537,20 +567,23 @@
     }
 
     errorMessage.hidden = true;
-
     draft = null;
-    $('letter-form').reset();
 
+    $('letter-form').reset();
     $('archive-status').textContent = '';
 
     showView('home');
   });
 
   // ==========================================
-  // DOWNLOAD LETTERS AS A STANDALONE HTML FILE
+  // DOWNLOAD LETTERS AS HTML
   // ==========================================
 
   function downloadLetters() {
+    if (!ownerMode || !readerUnlocked) {
+      return;
+    }
+
     const safeJson = JSON.stringify(letters)
       .replace(/</g, '\\u003c')
       .replace(/>/g, '\\u003e')
@@ -562,60 +595,50 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>For You, Someday — Letters</title>
-
 <style>
 body {
   margin: 0;
   padding: 0;
-  background: #faf6ef;
-  color: #252635;
+  background: #fffaf7;
+  color: #26372e;
   font: 18px Georgia, serif;
 }
-
 main {
   max-width: 760px;
   margin: auto;
   padding: 48px 22px;
 }
-
 h1 {
   font-size: clamp(2rem, 6vw, 4rem);
 }
-
 article {
   background: #fffefa;
-  border: 1px solid #ddd7d0;
+  border: 1px solid #e8dedf;
   border-radius: 18px;
   padding: 28px;
   margin: 24px 0;
   box-shadow: 0 12px 28px #25263512;
 }
-
 .message {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   line-height: 1.9;
 }
-
 small {
-  color: #696775;
+  color: #68786d;
 }
-
 a {
-  color: #925b62;
+  color: #397a54;
 }
 </style>
 </head>
-
 <body>
 <main>
   <h1>For You, Someday</h1>
   <p>A little collection of letters, kept close.</p>
   <div id="letters"></div>
 </main>
-
 <script id="letter-data" type="application/json">${safeJson}<\/script>
-
 <script>
 (() => {
   const data = JSON.parse(
@@ -655,8 +678,7 @@ a {
     }
 
     try {
-      const url = new URL(letter.spotify_link);
-
+      const url = new URL(letter.spotify_link || '');
       const match = url.pathname.match(
         /^\\/(?:intl-[a-z]{2}\\/)?track\\/([A-Za-z0-9]{22})\\/?$/
       );
@@ -668,7 +690,9 @@ a {
       ) {
         const link = document.createElement('a');
 
-        link.href = 'https://open.spotify.com/track/' + match[1];
+        link.href =
+          'https://open.spotify.com/track/' + match[1];
+
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = 'Listen on Spotify ↗';
@@ -712,7 +736,7 @@ a {
   // ==========================================
 
   $('delete-all-button').addEventListener('click', () => {
-    if (!ownerMode) {
+    if (!ownerMode || !readerUnlocked) {
       return;
     }
 
@@ -726,7 +750,7 @@ a {
   });
 
   $('confirm-delete').addEventListener('click', () => {
-    if (!ownerMode) {
+    if (!ownerMode || !readerUnlocked) {
       return;
     }
 
@@ -739,7 +763,6 @@ a {
       draft = null;
 
       $('delete-confirmation').hidden = true;
-
       status.textContent =
         'All letters were deleted from this browser.';
 
@@ -760,7 +783,11 @@ a {
   // ==========================================
 
   $('brand-home').addEventListener('click', () => {
-    showView('home');
+    if (readerUnlocked) {
+      showView('home');
+    } else {
+      showView('lock');
+    }
   });
 
   $('nav-home').addEventListener('click', () => {
@@ -784,8 +811,10 @@ a {
 
   $('writer-cancel').addEventListener('click', () => {
     draft = null;
+
     $('letter-form').reset();
     $('form-error').hidden = true;
+    $('save-error').hidden = true;
 
     showView('home');
   });
@@ -797,7 +826,7 @@ a {
   $('archive-search').addEventListener('input', renderArchive);
 
   $('download-button').addEventListener('click', () => {
-    if (!ownerMode) {
+    if (!ownerMode || !readerUnlocked) {
       $('archive-status').textContent =
         'Only the writer can download the letter collection.';
       return;
@@ -810,11 +839,15 @@ a {
   // INITIALIZE
   // ==========================================
 
-  window.addEventListener('hashchange', handleRoute);
+  if (writerRequested) {
+    document.body.classList.add('locked');
+    showView('lock');
+  } else {
+    document.body.classList.add('locked');
+    showView('lock');
+  }
 
   if (window.lucide) {
     window.lucide.createIcons();
   }
-
-  handleRoute();
 })();
